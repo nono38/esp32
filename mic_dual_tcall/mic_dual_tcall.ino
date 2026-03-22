@@ -569,6 +569,11 @@ const char INDEX_HTML[] PROGMEM = R"rawliteral(
     pf.style.width = '0%';
     btn.disabled = true;
 
+    const maxBytes = 1.3 * 1024 * 1024; // ~1.3 MB max pour SPIFFS
+    if (f.size > maxBytes) {
+      alert("⚠️ Le fichier MP3 est trop grand ! " + (f.size/1024/1024).toFixed(2) + " MB.\nIl va s'arrêter avant la fin car la mémoire de l'ESP32 (~1.3 MB) sera pleine.");
+    }
+
     const xhr = new XMLHttpRequest();
     xhr.open('POST', '/upload', true);
 
@@ -778,7 +783,14 @@ void startMP3Playback() {
   mp3File  = new AudioFileSourceSPIFFS("/uploaded.mp3");
   audioOut = new AudioOutputI2S();
   audioOut->SetPinout(I2S_SCK_PIN, I2S_WS_PIN, I2S_DOUT_PIN);
-  audioOut->SetGain(noteVolume);
+  
+  // Buffers GÉANTS pour le MP3 (16x1024 au lieu des tout petits de base). 
+  // Les parties fortes (beaucoup de décibels) demandent plus de calculs au MP3, ce qui vide le buffer et fait grésiller.
+  audioOut->SetBuffers(16, 1024);
+  
+  // Gain limité à 85% du slider pour bloquer toute saturation (clipping digital) sur les gros pics de son
+  audioOut->SetGain(noteVolume * 0.85);
+
   mp3      = new AudioGeneratorMP3();
 
   if (mp3->begin(mp3File, audioOut)) {
