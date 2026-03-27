@@ -1,0 +1,1 @@
+secrets = { 'ssid' : "BadAPName", 'password' : "12345678" }

